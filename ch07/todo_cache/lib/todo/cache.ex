@@ -1,8 +1,10 @@
 defmodule Todo.Cache do
   use GenServer
 
+  @db_worker_num 3
+
   def start() do
-    Todo.Database.start()
+    Todo.Database.start(@db_worker_num)
     {:ok, server_pid} = GenServer.start(__MODULE__, nil)
     Process.register(server_pid, :todo_cache)
   end

@@ -1,8 +1,8 @@
 defmodule Todo.Server do
   use GenServer
 
-  def start() do
-    {:ok, server_pid} = GenServer.start(__MODULE__, nil)
+  def start(list_name) do
+    {:ok, server_pid} = GenServer.start(__MODULE__, list_name)
     server_pid
   end
 
@@ -26,27 +26,46 @@ defmodule Todo.Server do
     GenServer.call(server_pid, {:gets, date})
   end
 
-  def init(_) do
-    {:ok, Todo.List.new()}
+  def init(list_name) do
+    # it makes trouble when init called over once
+    {:ok, {list_name, Todo.Database.get(list_name) || Todo.List.new()}}
   end
 
-  def handle_cast({:add, entry}, state) do
-    {:noreply, Todo.List.add_entry(state, entry)}
+  def handle_cast({:add, entry}, {list_name, todo_list}) do
+    new_list = Todo.List.add_entry(todo_list, entry)
+
+    Todo.Database.store(list_name, new_list)
+
+    {:noreply, {list_name, new_list}}
   end
 
-  def handle_cast({:update, entry_id, updater_fun}, state) do
-    {:noreply, Todo.List.update_entry(state, entry_id, updater_fun)}
+  def handle_cast({:update, entry_id, updater_fun}, {list_name, todo_list}) do
+    new_list = Todo.List.update_entry(todo_list, entry_id, updater_fun)
+
+    Todo.Database.store(list_name, new_list)
+
+    {:noreply, {list_name, new_list}}
   end
 
-  def handle_cast({:update, %{} = new_entry}, state) do
-    {:noreply, Todo.List.update_entry(state, new_entry)}
+  def handle_cast({:update, %{} = new_entry}, {list_name, todo_list}) do
+    new_list = Todo.List.update_entry(todo_list, new_entry)
+
+    Todo.Database.store(list_name, new_list)
+
+    {:noreply, {list_name, new_list}}
   end
 
-  def handle_cast({:delete, entry_id}, state) do
-    {:noreply, Todo.List.delete_entry(state, entry_id)}
+  def handle_cast({:delete, entry_id}, {list_name, todo_list}) do
+    new_list = Todo.List.delete_entry(todo_list, entry_id)
+
+    Todo.Database.store(list_name, new_list)
+
+    {:noreply, {list_name, new_list}}
   end
 
-  def handle_call({:gets, date}, _, state) do
-    {:reply, Todo.List.entries(state, date), state}
+  def handle_call({:gets, date}, _, {list_name, todo_list}) do
+    {:reply,
+      Todo.List.entries(todo_list, date),
+      {list_name, todo_list}}
   end
 end

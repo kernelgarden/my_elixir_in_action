@@ -26,24 +26,22 @@ defmodule Todo.Database do
       {idx, worker}
     end
 
-    IO.inspect("result: #{worker_pool}")
-
     {:ok, worker_pool}
   end
 
   def handle_cast({:store, key, data}, worker_pool) do
-    worker = choose_worker(key)
+    worker = choose_worker(worker_pool, key)
     Todo.DatabaseWorker.store(worker, key, data)
     {:noreply, worker_pool}
   end
 
-  def handle_call({:get, key}, caller, worker_pool) do
-    worker = choose_worker(key)
-    Todo.DatabaseWorker.get(worker, caller, key)
-    {:reply, nil, worker_pool}
+  def handle_call({:get, key}, _, worker_pool) do
+    worker = choose_worker(worker_pool, key)
+    response = Todo.DatabaseWorker.get(worker, key)
+    {:reply, response, worker_pool}
   end
 
-  def choose_worker(key) do
-    :erlang.phash2(key, 3)
+  def choose_worker(worker_pool, key) do
+    Map.get(worker_pool, :erlang.phash2(key, 3))
   end
 end

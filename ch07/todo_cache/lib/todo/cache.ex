@@ -24,6 +24,16 @@ defmodule Todo.Cache do
         {:reply, todo_server, todo_servers}
 
       :error ->
+        """
+        GenServer.start(Todo.Server, todo_list_name)
+        todo_server = receive do
+          {:ok, todo_server} -> todo_server
+          _ ->
+            IO.puts("Error!!! cannot make todo server")
+            nil
+        end
+        """
+
         {:ok, todo_server} = GenServer.start(Todo.Server, todo_list_name)
         {
           :reply,

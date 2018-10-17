@@ -2,8 +2,7 @@ defmodule Todo.Server do
   use GenServer
 
   def start(list_name) do
-    {:ok, server_pid} = GenServer.start(__MODULE__, list_name)
-    server_pid
+    GenServer.start(__MODULE__, list_name)
   end
 
   def add_entry(server_pid, entry) do

@@ -13,12 +13,13 @@ defmodule Todo.DatabaseWorker do
     GenServer.call(pid, {:get, key})
   end
 
-
+  @impl GenServer
   def init(db_path) do
     File.mkdir_p!(db_path)
     {:ok, db_path}
   end
 
+  @impl GenServer
   def handle_cast({:store, key, data}, db_path) do
     key
     |> file_name(db_path)
@@ -29,6 +30,7 @@ defmodule Todo.DatabaseWorker do
     {:noreply, db_path}
   end
 
+  @impl GenServer
   def handle_call({:get, key}, _, db_path) do
     data = case File.read(file_name(key, db_path)) do
       {:ok, contents} -> :erlang.binary_to_term(contents)

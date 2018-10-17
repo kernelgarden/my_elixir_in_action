@@ -34,7 +34,7 @@ defmodule Todo.Cache do
         end
         """
 
-        {:ok, todo_server} = GenServer.start(Todo.Server, todo_list_name)
+        {:ok, todo_server} = Todo.Server.start(todo_list_name)
         {
           :reply,
           todo_server,

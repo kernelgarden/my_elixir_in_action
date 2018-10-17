@@ -8,14 +8,22 @@ defmodule Todo.Database do
   end
 
   def store(key, data) do
-    GenServer.cast(__MODULE__, {:store, key, data})
+    key
+    |> choose_worker()
+    |> Todo.DatabaseWorker.store(key, data)
   end
 
   def get(key) do
-    GenServer.call(__MODULE__, {:get, key})
+    key
+    |> choose_worker()
+    |> Todo.DatabaseWorker.get(key)
   end
 
+  def choose_worker(key) do
+    GenServer.call(__MODULE__, {:choose_worker, key})
+  end
 
+  @impl GenServer
   def init(worker_num) do
     File.mkdir_p!(@db_folder)
 
@@ -29,19 +37,10 @@ defmodule Todo.Database do
     {:ok, worker_pool}
   end
 
-  def handle_cast({:store, key, data}, worker_pool) do
-    worker = choose_worker(worker_pool, key)
-    Todo.DatabaseWorker.store(worker, key, data)
-    {:noreply, worker_pool}
-  end
-
-  def handle_call({:get, key}, _, worker_pool) do
-    worker = choose_worker(worker_pool, key)
-    response = Todo.DatabaseWorker.get(worker, key)
-    {:reply, response, worker_pool}
-  end
-
-  def choose_worker(worker_pool, key) do
-    Map.get(worker_pool, :erlang.phash2(key, 3))
+  @impl GenServer
+  def handle_call({:choose_worker, key}, _, worker_pool) do
+    worker = Map.get(worker_pool, :erlang.phash2(key, 3) + 1)
+    IO.inspect("choose #{inspect worker}, key: #{inspect key}")
+    {:reply, worker, worker_pool}
   end
 end

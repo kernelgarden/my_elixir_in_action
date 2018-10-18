@@ -9,12 +9,18 @@ defmodule Todo.Cache do
     Process.register(server_pid, :todo_cache)
   end
 
+  def start_link(_) do
+    IO.puts("Starting Todo Cache")
+    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  end
+
   def server_process(todo_list_name) do
-    GenServer.call(:todo_cache, {:server_process, todo_list_name})
+    GenServer.call(__MODULE__, {:server_process, todo_list_name})
   end
 
 
   def init(_) do
+    Todo.Database.start(@db_worker_num)
     {:ok, %{}}
   end
 

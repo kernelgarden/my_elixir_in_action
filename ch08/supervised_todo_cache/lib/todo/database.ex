@@ -3,6 +3,10 @@ defmodule Todo.Database do
 
   @db_folder "./persist"
 
+  def start_link(worker_num) do
+    GenServer.start_link(__MODULE__, worker_num, name: __MODULE__)
+  end
+
   def start(worker_num) do
     GenServer.start(__MODULE__, worker_num, name: __MODULE__)
   end
@@ -30,7 +34,7 @@ defmodule Todo.Database do
     IO.puts("Starting DB Server")
 
     worker_pool = for idx <- 1..worker_num, into: %{} do
-      {:ok, worker} = Todo.DatabaseWorker.start(Path.join(@db_folder, to_string(idx)))
+      {:ok, worker} = Todo.DatabaseWorker.start_link(Path.join(@db_folder, to_string(idx)))
       {idx, worker}
     end
 

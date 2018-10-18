@@ -20,7 +20,7 @@ defmodule Todo.Cache do
 
 
   def init(_) do
-    Todo.Database.start(@db_worker_num)
+    Todo.Database.start_link(@db_worker_num)
     {:ok, %{}}
   end
 
@@ -30,7 +30,7 @@ defmodule Todo.Cache do
         {:reply, todo_server, todo_servers}
 
       :error ->
-        {:ok, todo_server} = Todo.Server.start(todo_list_name)
+        {:ok, todo_server} = Todo.Server.start_link(todo_list_name)
         {
           :reply,
           todo_server,

@@ -1,6 +1,11 @@
 defmodule Todo.DatabaseWorker do
   use GenServer
 
+  def start_link(db_path) do
+    IO.puts("Starting DB Worker - #{inspect self()}")
+    GenServer.start_link(__MODULE__, db_path)
+  end
+
   def start(db_path) do
     IO.puts("Starting DB Worker - #{inspect self()}")
     GenServer.start(__MODULE__, db_path)

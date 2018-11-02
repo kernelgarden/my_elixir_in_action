@@ -9,7 +9,7 @@ defmodule SimpleRegistry do
     )
   end
 
-  def registry(target_name) do
+  def register(target_name) do
     GenServer.call(__MODULE__, {:registry, target_name})
   end
 
@@ -30,15 +30,17 @@ defmodule SimpleRegistry do
   end
 
   def handle_call({:registry, process_name}, _, process_map) do
-    {res, new_map} = case Map.has_key?(process_map, process_name) do
-      false ->
-        module = name2module(process_name)
-        {:ok, proc} = GenServer.start_link(module, [], name: module)
-        new_map = Map.put(process_map, process_name, proc)
-        {:ok, new_map}
-      true ->
-        {:error, process_map}
-    end
+    {res, new_map} =
+      case Map.has_key?(process_map, process_name) do
+        false ->
+          module = name2module(process_name)
+          {:ok, proc} = GenServer.start_link(module, [], name: module)
+          new_map = Map.put(process_map, process_name, proc)
+          {:ok, new_map}
+
+        true ->
+          {:error, process_map}
+      end
 
     {:reply, res, new_map}
   end
@@ -49,7 +51,7 @@ defmodule SimpleRegistry do
 
   def handle_info({:EXIT, pid, reason}, process_map) do
     new_map = for {k, v} <- process_map, v != pid, into: %{}, do: {k, v}
-    IO.puts("Dropped pid - #{inspect pid}, reason - #{reason}")
+    IO.puts("Dropped pid - #{inspect(pid)}, reason - #{reason}")
     {:noreply, new_map}
   end
 
